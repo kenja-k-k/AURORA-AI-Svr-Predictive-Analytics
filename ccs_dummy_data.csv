@@ -1826,3 +1826,4 @@ date,facility_id,facility_name,country,region,storage_site_type,co2_emitted_tonn
 12/30/2024,F-E05,Epsilon Capture,United Kingdom,Aberdeenshire,Depleted Gas Field,10226.38,10216.15,10114.9,99.9,99.009,FALSE,
 2025-08-15,K-A01,Kool CCS Plant,USA,Texas,Saline Aquifer,12500.5,11000.2,10980.1,88.0,99.8,False
 2025-08-15,K-A02,Kappa CCS Plant,USA,Texas,Saline Aquifer,12500.5,11000.2,10980.1,88.0,99.8,False
+2025-08-15,K-W01,Kurva-01 Plant,Czech Republic,Kutna Hora,Saline Aquifer,12500.5,11000.2,10980.1,88.0,99.8,False

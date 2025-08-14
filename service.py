@@ -51,7 +51,7 @@ def set_csv(path: str):
 
 
 # endpoint for updates
-@app.post("/update/")
+@app.post("/update_csv/")
 def update_csv(entry: GlobalInput):
     global data, csv_path
     if csv_path is None:
@@ -68,20 +68,20 @@ def update_csv(entry: GlobalInput):
 
 
 # endpoint to get only the plot image
-@app.get("/insights/")
+@app.get("/get_insights/")
 def get_insights_plot(facility_name: str, scatter: bool = False):
     global csv_path, data
     if csv_path is None:
-        raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before any analysis.")
+        raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anything.")
     
     if data.empty:
-        raise HTTPException(status_code=400, detail="No data loaded. Use /set_csv/ to load data first.")
+        raise HTTPException(status_code=400, detail="No csv loaded. Use /set_csv/ before anything.")
 
     # Call the CO2_emssion_pattern, for now, only returning the plot. Might modify the response in future commits
     model, graph = CO2_emssion_pattern(data, facility_name=facility_name, plot=True, scatter=scatter)
 
     if graph is None:
-        raise HTTPException(status_code=404, detail=f"No plot could be generated for facility: {facility_name}")
+        raise HTTPException(status_code=404, detail=f"No data for {facility_name}.")
     
     """
     Converting the img from the CO2_emssion_pattern() into b64, 
@@ -94,5 +94,5 @@ def get_insights_plot(facility_name: str, scatter: bool = False):
     buf.seek(0)
     plot_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
 
-    return {"plot_image": plot_base64}
+    return {plot_base64}
 #___________________________
