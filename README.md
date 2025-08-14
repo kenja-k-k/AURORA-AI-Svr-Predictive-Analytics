@@ -1,6 +1,6 @@
 <h1>On demand CO2 analytics</h1>
-This project is a FastAPI-based web service for managing and analyzing CO2 emission data. 
-It allows users to upload a CSV dataset, add new data entries, and generate analytical insights with a model (currently L2), 
+This project is a FastAPI-based service for managing and analyzing CO2 emission data. 
+It allows users to upload a CSV dataset, update with entries, and generate analytical insights with a model (currently L2), 
 including an optional plot.
 
 <h2>Usage</h2>
