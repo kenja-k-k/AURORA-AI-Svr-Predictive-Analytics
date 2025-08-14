@@ -5,7 +5,7 @@ import os
 import base64
 from io import BytesIO
 
-# Import the necessary function from the insights.py file
+# Import the analytics function from the insights.py file
 from insights import CO2_emssion_pattern
 
 app = FastAPI(title="CSV Update Service")
