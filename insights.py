@@ -33,7 +33,7 @@ def CO2_emssion_pattern(data, facility_name, plot=False, scatter=False):
         plt.ylabel("Capture Efficiency (%)")
         plt.title(f"{facility_name}: Emissions vs Capture Efficiency")
         plt.legend()
-        # plt.show() is removed as it's not needed for a web service
+        # plt.show()  not needed for now
 
     return model, graph
 #__________________________________________________________________
