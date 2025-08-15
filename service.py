@@ -4,8 +4,21 @@ import pandas as pd
 import os
 import base64
 from io import BytesIO
+from fastapi.middleware.cors import CORSMiddleware
 
-# Import the necessary function from the insights.py file
+"""
+Adding cors functionality
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[""], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+"""
+# Import the analytics function from the insights.py file
 from insights import CO2_emssion_pattern
 
 app = FastAPI(title="CSV Update Service")
@@ -40,7 +53,7 @@ def set_csv(path: str):
     if os.path.exists(csv_path):
         data = pd.read_csv(csv_path)
 
-        if "anomaly_flag" not in data.columns:# check if anomaly_flag exists
+        if "anomaly_flag" not in data.columns:# check if anomaly_flag even exists
             data["anomaly_flag"] = False
     else:
         columns = list(GlobalInput.schema()["properties"].keys()) + ["anomaly_flag"]
