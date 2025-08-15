@@ -6,6 +6,7 @@ import base64
 from io import BytesIO
 from fastapi.middleware.cors import CORSMiddleware
 
+
 """
 Adding cors functionality
 
@@ -18,6 +19,7 @@ app.add_middleware(
 )
 
 """
+
 # Import the analytics function from the insights.py file
 from insights import CO2_emssion_pattern
 
