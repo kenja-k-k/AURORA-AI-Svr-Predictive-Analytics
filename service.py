@@ -1,29 +1,25 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 import pandas as pd
 import os
 import base64
 from io import BytesIO
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone
 
-
-"""
-Adding cors functionality
-
+app = FastAPI(title="CSV Update Service")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[""], 
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-"""
-
 # Import the analytics function from the insights.py file
 from insights import CO2_emssion_pattern
 
-app = FastAPI(title="CSV Update Service")
+
 
 #Initialize the csv as nothing___________
 data = pd.DataFrame()
@@ -47,27 +43,64 @@ class GlobalInput(BaseModel):
 #___________________________
 
 
-# endpoint to set csv
-@app.post("/set_csv/")
-def set_csv(path: str):
+# endpoint to upload from frontend____________
+@app.post("/upload_csv/")
+async def upload_csv(file: UploadFile = File(...)):
     global csv_path, data
-    csv_path = path
-    if os.path.exists(csv_path):
-        data = pd.read_csv(csv_path)
+     
+    timestamp = datetime.now().astimezone().strftime("%Y-%m-%d_%H-%M-%S_%Z")
+    csv_path = f"./{timestamp}_{file.filename}" #save file to local dir
+    with open(csv_path, "wb") as f:
+        f.write(await file.read())
 
-        if "anomaly_flag" not in data.columns:# check if anomaly_flag even exists
-            data["anomaly_flag"] = False
-    else:
-        columns = list(GlobalInput.schema()["properties"].keys()) + ["anomaly_flag"]
-        data = pd.DataFrame(columns=columns)
+    data = pd.read_csv(csv_path) #data is now the uploaded csv
+    """
+    if "anomaly_flag" not in data.columns: #check if the anomaly_flag field even exists
+        data["anomaly_flag"] = False
         data.to_csv(csv_path, index=False)
-    return {"status": "success", "message": f"CSV path set to {csv_path}"}
+    """
+    return {"status": "success", "message": f"Your csv has been uploaded, and saved to {csv_path}"}
 #___________________________
 
 
+# endpoint to a set csv that exists the server___________
+@app.post("/use_csv/")
+async def use_csv(csv_name: str):
+    global csv_path, data
+    
+    csv_path = fr".\{csv_name}" 
+    if os.path.exists(csv_path):
+
+        data = pd.read_csv(csv_path)
+        return {f"CSV data set to local path on server: {csv_path}"}
+    else:
+        return {"error": "CSV not found on server. Please check the file name."}
+
+#__________________________________
+
+# endpoint to a print a csv that exists the server___________
+    """
+    This is very slow right now, because a lot of rows need to be transformed or dropped
+    will try to find a bette way to do this.
+    """
+@app.get("/get_csv/")
+async def use_csv(csv_name: str):
+    global csv_path, data
+    
+    csv_path = fr".\{csv_name}" 
+    if os.path.exists(csv_path):
+
+        data = pd.read_csv(csv_path)
+        data = data.fillna("") 
+        return data.to_dict(orient="records")
+    else:
+        return {"error": "CSV not found on server. Please check the file name."}
+
+#__________________________________
+
 # endpoint for updates
 @app.post("/update_csv/")
-def update_csv(entry: GlobalInput):
+async def update_csv(entry: GlobalInput):
     global data, csv_path
     if csv_path is None:
         raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anythong.")
@@ -84,7 +117,7 @@ def update_csv(entry: GlobalInput):
 
 # endpoint to get only the plot image
 @app.get("/get_insights/")
-def get_insights_plot(facility_name: str, scatter: bool = False):
+async def get_insights_plot(facility_name: str, scatter: bool = False):
     global csv_path, data
     if csv_path is None:
         raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anything.")
@@ -92,7 +125,7 @@ def get_insights_plot(facility_name: str, scatter: bool = False):
     if data.empty:
         raise HTTPException(status_code=400, detail="No csv loaded. Use /set_csv/ before anything.")
 
-    # Call the CO2_emssion_pattern, for now, only returning the plot. Might modify the response in future commits
+    # Call the CO2_emssion_pattern. For now, only returning the plot. Might modify the response in future commits
     model, graph = CO2_emssion_pattern(data, facility_name=facility_name, plot=True, scatter=scatter)
 
     if graph is None:
@@ -100,7 +133,7 @@ def get_insights_plot(facility_name: str, scatter: bool = False):
     
     """
     Converting the img from the CO2_emssion_pattern() into b64, 
-    because cant display matplot from cli.
+    because cant send a matplot directly.
     This can be decoded to get the actual plot on the front end.
     """
 
