@@ -1,4 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import Request
+from fastapi.responses import StreamingResponse
+import asyncio
 from pydantic import BaseModel
 import pandas as pd
 import os
@@ -17,7 +20,7 @@ app.add_middleware(
 )
 
 # Import the analytics function from the insights.py file
-from insights import CO2_emssion_pattern
+from insights import CO2_emssion_pattern, CO2_stats
 
 
 
@@ -29,17 +32,18 @@ csv_path = None
 
 # Expected format for requests___________________________
 class GlobalInput(BaseModel):
-    date: str
-    facility_id: str
-    facility_name: str
-    country: str
-    region: str
-    storage_site_type: str
-    co2_emitted_tonnes: float | None = None
-    co2_captured_tonnes: float | None = None
-    co2_stored_tonnes: float | None = None
-    capture_efficiency_percent: float | None = None
-    storage_integrity_percent: float | None = None
+    date                        : str
+    facility_id                 : str
+    facility_name               : str
+    country                     : str
+    region                      : str
+    storage_site_type           : str
+    co2_emitted_tonnes          : float | None = None
+    co2_captured_tonnes         : float | None = None
+    co2_stored_tonnes           : float | None = None
+    capture_efficiency_percent  : float | None = None
+    storage_integrity_percent   : float | None = None
+    #anomaly_flag                :
 #___________________________
 
 
@@ -78,6 +82,7 @@ async def use_csv(csv_name: str):
 
 #__________________________________
 
+
 # endpoint to a print a csv that exists the server___________
     """
     This is very slow right now, because a lot of rows need to be transformed or dropped
@@ -98,24 +103,93 @@ async def use_csv(csv_name: str):
 
 #__________________________________
 
-# endpoint for updates
+
+#For streaming graphs___________________
+fronts = []
+@app.get("/graph_stream/")
+async def graph_stream(facility_name: str):
+    async def event_generator():
+        queue = asyncio.Queue()
+        fronts.append((queue, facility_name))
+
+        try:
+            while True:
+                graph_base64 = await queue.get()
+                yield f"data: {graph_base64}\n\n"
+        finally:
+            fronts.remove((queue, facility_name))
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+async def graph_update():
+    for queue, facility in fronts:
+        graph = CO2_stats(data, facility)
+        buf = BytesIO()
+        graph.savefig(buf, format="png")
+        buf.seek(0)
+        graph_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+        await queue.put(graph_base64)
+#___________________
+
+
 @app.post("/update_csv/")
 async def update_csv(entry: GlobalInput):
     global data, csv_path
     if csv_path is None:
-        raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anythong.")
+        raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anything.")
 
     entry_dict = entry.dict()
-    entry_dict["anomaly_flag"] = any(value is None for value in entry_dict.values()) # Set the flag anomaly to True if any value is None
+
+    
+    anomaly_flag = any(value is None for value in entry_dict.values()) # flag missing values beforehand
+
+    
+    model, _, _ = CO2_emssion_pattern(data, entry_dict["facility_name"], plot=False, scatter=False) # Train the model for facility
+
+    predicted = None
+    if model is not None:
+        predicted = model.predict([[entry_dict["co2_emitted_tonnes"]]])[0]
+        
+        if entry_dict["capture_efficiency_percent"] <= 0.9 * predicted: # Permissable range
+            anomaly_flag = True
+
+    entry_dict["anomaly_flag"] = anomaly_flag
+
     new_entry = pd.DataFrame([entry_dict])
-    data = pd.concat([data, new_entry], ignore_index=True) #append the pd df in memory
-    new_entry.to_csv(csv_path, mode="a", header=False, index=False) #append current CSV on disk
+    data = pd.concat([data, new_entry], ignore_index=True)
+    new_entry.to_csv(csv_path, mode="a", header=False, index=False)
 
-    return {"status": "success", "message": f"Data added to {csv_path}", "anomaly_flag": entry_dict["anomaly_flag"]}
-#___________________________
+    await graph_update()
+    return {
+        "status": "success",
+        "message": f"Data added to {csv_path}",
+        "anomaly_flag": anomaly_flag,
+        "predicted_efficiency": predicted
+    }
 
 
-# endpoint to get only the plot image
+# endpoint for live tracking with every csv update___________
+@app.get("/get_graph/")
+async def efficiency_tracking_graph(facility_name: str):
+    global csv_path, data
+    if csv_path is None:
+        raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anything.")
+    
+    graph = CO2_stats(data, facility_name)
+    if graph is None:
+        raise HTTPException(status_code=404, detail=f"No data for {facility_name}.")
+    
+    buf = BytesIO()
+    graph.savefig(buf, format="png")
+    buf.seek(0)
+    plot_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    return {plot_base64}
+
+#__________________________________
+
+
+# endpoint to get only the plot image______________________
 @app.get("/get_insights/")
 async def get_insights_plot(facility_name: str, scatter: bool = False):
     global csv_path, data
@@ -126,7 +200,7 @@ async def get_insights_plot(facility_name: str, scatter: bool = False):
         raise HTTPException(status_code=400, detail="No csv loaded. Use /set_csv/ before anything.")
 
     # Call the CO2_emssion_pattern. For now, only returning the plot. Might modify the response in future commits
-    model, graph = CO2_emssion_pattern(data, facility_name=facility_name, plot=True, scatter=scatter)
+    model, graph, _ = CO2_emssion_pattern(data, facility_name=facility_name, plot=True, scatter=scatter)
 
     if graph is None:
         raise HTTPException(status_code=404, detail=f"No data for {facility_name}.")
