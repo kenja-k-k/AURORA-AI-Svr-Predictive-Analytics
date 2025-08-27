@@ -111,7 +111,7 @@ def seasonal_emission_forecasts(data, facility_name):
         seasons = ranges[ranges["column"] == col]["season"]
 
         # Expected Range
-        plt.fill_between(seasons, lowers, uppers, alpha=0.2, label=f"{col} ±10%")
+        plt.fill_between(seasons, lowers, uppers, alpha=0.2, label=f"{col}")
 
     plt.xlabel("Season")
     plt.ylabel("CO2 stats")
