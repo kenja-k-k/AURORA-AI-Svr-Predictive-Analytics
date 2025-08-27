@@ -15,7 +15,8 @@ def CO2_stats(data, facility_name):
     filtered = data[data["facility_name"] == facility_name].dropna(
         subset=["co2_emitted_tonnes", "capture_efficiency_percent"]
     )
-    filtered["date"] = pd.to_datetime(filtered["date"])
+    filtered["date"] = pd.to_datetime(filtered["date"], format="%d/%m/%Y", dayfirst=True)
+
     normal  = filtered[filtered["anomaly_flag"] == False]
     anomalies = filtered[filtered["anomaly_flag"] == True]
     graph   = plt.figure(figsize=(16,9))
@@ -32,8 +33,100 @@ def CO2_stats(data, facility_name):
     plt.title(f"Efficiency tracking for {facility_name}")
     plt.legend()
     
-    return graph
+    return graph, filtered[["date", "co2_captured_tonnes", "capture_efficiency_percent"]]
 #_______________________________
+
+#Seasonal Forecasts__________________
+def get_dates_data (data, start_date, end_date): #This one is not in use for now
+    
+    data = data.copy()
+    data["date"] = pd.to_datetime(data["date"], format="%d/%m/%Y", dayfirst=True)
+    
+    start = pd.to_datetime(start_date, format="%d/%m/%Y", dayfirst=True)
+    end = pd.to_datetime(end_date, format="%d/%m/%Y", dayfirst=True)
+    
+    filtered = data[(data["date"] >= start) & (data["date"] <= end)]
+    return filtered
+
+def seasonify(data, start_month, end_month):
+
+    data = data.copy()
+    # Ensure 'date' is datetime
+    data["date"] = pd.to_datetime(data["date"], format="%d/%m/%Y", dayfirst=True)
+    data["month"] = data["date"].dt.month
+
+    if start_month <= end_month:
+        # Normal range within the year
+        mask = (data["month"] >= start_month) & (data["month"] <= end_month)
+    else:
+        # Cross-year range (like dec to feb)
+        mask = (data["month"] >= start_month) | (data["month"] <= end_month)
+
+    filtered = data[mask]
+    return filtered
+
+def seasonal_emission_forecasts(data, facility_name):
+    filtered = data[data["facility_name"] == facility_name].dropna(
+        subset=["co2_emitted_tonnes", "co2_captured_tonnes", "capture_efficiency_percent"]
+    )
+
+    # Use the month-only version of seasonify
+    summer_stats = seasonify(filtered, 5, 9)
+    autumn_stats = seasonify(filtered, 10, 11)
+    winter_stats = seasonify(filtered, 12, 2)
+    spring_stats = seasonify(filtered, 3, 4)
+
+    cols = ["co2_emitted_tonnes", "co2_captured_tonnes"]
+
+    rows = []
+
+    for season_name, df in [("Summer", summer_stats),
+                            ("Autumn", autumn_stats),
+                            ("Winter", winter_stats),
+                            ("Spring", spring_stats)]:
+        med = df[cols].median()
+        lower = med * 0.9
+        upper = med * 1.1
+
+        for col in cols:
+            rows.append({
+                "season": season_name,
+                "column": col,
+                "median": med[col],
+                "lower": lower[col],
+                "upper": upper[col]
+            })
+
+    # Convert list of dicts to DataFrame
+    ranges = pd.DataFrame(rows)
+
+    
+    plt.figure(figsize=(12,6))
+    
+    for col in cols:
+
+        #medians = ranges[ranges["column"] == col]["median"]
+        lowers = ranges[ranges["column"] == col]["lower"]
+        uppers = ranges[ranges["column"] == col]["upper"]
+        seasons = ranges[ranges["column"] == col]["season"]
+
+        # Expected Range
+        plt.fill_between(seasons, lowers, uppers, alpha=0.2, label=f"{col} ±10%")
+
+    plt.xlabel("Season")
+    plt.ylabel("CO2 stats")
+    plt.title(f"Seasonal CO2 ranges for {facility_name}")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    
+    # Save the figure object to return
+    graph = plt.gcf()
+    
+    return ranges, graph
+
+#___________________________
+
 
 #Main function for analytics. This may use different models_________
 def CO2_emssion_pattern(data, facility_name, plot=False, scatter=False):

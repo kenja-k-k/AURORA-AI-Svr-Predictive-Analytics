@@ -8,7 +8,10 @@ import os
 import base64
 from io import BytesIO
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
+# Import the analytics function from the local insights.py file
+from insights import CO2_emssion_pattern, CO2_stats, seasonal_emission_forecasts
 
 app = FastAPI(title="CSV Update Service")
 app.add_middleware(
@@ -19,8 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import the analytics function from the insights.py file
-from insights import CO2_emssion_pattern, CO2_stats
+
 
 
 
@@ -132,6 +134,7 @@ async def graph_update():
 #___________________
 
 
+#To update the csv___________________________
 @app.post("/update_csv/")
 async def update_csv(entry: GlobalInput):
     global data, csv_path
@@ -166,16 +169,17 @@ async def update_csv(entry: GlobalInput):
         "anomaly_flag": anomaly_flag,
         "predicted_efficiency": predicted
     }
+#________________________________________
 
 
 # endpoint for live tracking with every csv update___________
 @app.get("/get_graph/")
-async def efficiency_tracking_graph(facility_name: str):
+async def efficiency_tracking_graph(facility_name: str, nums: bool = False):
     global csv_path, data
     if csv_path is None:
         raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anything.")
     
-    graph = CO2_stats(data, facility_name)
+    graph, numbers = CO2_stats(data, facility_name)
     if graph is None:
         raise HTTPException(status_code=404, detail=f"No data for {facility_name}.")
     
@@ -184,9 +188,35 @@ async def efficiency_tracking_graph(facility_name: str):
     buf.seek(0)
     plot_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
 
-    return {plot_base64}
+    if nums == True:
+        return {plot_base64}, numbers
+
+    else: return {plot_base64}
 
 #__________________________________
+
+#for seasonal stats
+@app.get("/get_seasonal_stats/")
+async def get_seasonal_stats(facility_name: str, plot: bool = False):
+    global csv_path, data
+
+    if csv_path is None:
+        raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anything.")
+    
+    stats, graph = seasonal_emission_forecasts(data, facility_name)
+    if graph is None:
+        raise HTTPException(status_code=404, detail=f"No data for {facility_name}.")
+
+    buf = BytesIO()
+    graph.savefig(buf, format="png")
+    buf.seek(0)
+    plot_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    if plot == True:
+        return {plot_base64}, stats
+
+    else: return stats
+#_________________________________
 
 
 # endpoint to get only the plot image______________________
