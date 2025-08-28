@@ -122,8 +122,7 @@ def seasonal_emission_forecasts(data, facility_name):
     
     # Save the figure object to return
     graph = plt.gcf()
-    
-    return ranges, graph
+    return ranges
 
 #___________________________
 
