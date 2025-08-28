@@ -13,7 +13,7 @@ from datetime import datetime, timezone, timedelta
 # Import the analytics function from the local insights.py file
 from insights import CO2_emssion_pattern, CO2_stats, seasonal_emission_forecasts
 
-app = FastAPI(title="CSV Update Service")
+app = FastAPI(title="Prediction service")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -55,7 +55,7 @@ async def upload_csv(file: UploadFile = File(...)):
     global csv_path, data
      
     timestamp = datetime.now().astimezone().strftime("%Y-%m-%d_%H-%M-%S_%Z")
-    csv_path = f"./{timestamp}_{file.filename}" #save file to local dir
+    csv_path = f"./dataset_file.csv" #save file to local dir and make sure that only obe file is there at a time
     with open(csv_path, "wb") as f:
         f.write(await file.read())
 
@@ -69,12 +69,10 @@ async def upload_csv(file: UploadFile = File(...)):
 #___________________________
 
 
-# endpoint to a set csv that exists the server___________
-@app.post("/use_csv/")
-async def use_csv(csv_name: str):
+
+def use_csv():
     global csv_path, data
-    
-    csv_path = fr".\{csv_name}" 
+    csv_path = fr".\dataset_file.csv"
     if os.path.exists(csv_path):
 
         data = pd.read_csv(csv_path)
@@ -88,10 +86,10 @@ async def use_csv(csv_name: str):
 # endpoint to a print a csv that exists the server___________
     """
     This is very slow right now, because a lot of rows need to be transformed or dropped
-    will try to find a bette way to do this.
+    will try to find a better way to do this.
     """
 @app.get("/get_csv/")
-async def use_csv(csv_name: str):
+async def get_csv(csv_name: str):
     global csv_path, data
     
     csv_path = fr".\{csv_name}" 
@@ -197,10 +195,10 @@ async def efficiency_tracking_graph(facility_name: str, nums: bool = False):
 
 #for seasonal stats
 @app.get("/get_seasonal_stats/")
-async def get_seasonal_stats(facility_name: str, plot: bool = False):
+async def get_seasonal_stats(facility_name: str):
     #need to research on what else can affect the prediction
     global csv_path, data
-
+    use_csv()
     if csv_path is None:
         raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anything.")
     
@@ -213,39 +211,6 @@ async def get_seasonal_stats(facility_name: str, plot: bool = False):
     buf.seek(0)
     plot_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
 
-    if plot == True:
-        return {plot_base64}, stats
-
-    else: return stats
+    return stats
 #_________________________________
 
-
-# endpoint to get only the plot image______________________
-@app.get("/get_insights/")
-async def get_insights_plot(facility_name: str, scatter: bool = False):
-    global csv_path, data
-    if csv_path is None:
-        raise HTTPException(status_code=400, detail="CSV path not set. Use /set_csv/ before anything.")
-    
-    if data.empty:
-        raise HTTPException(status_code=400, detail="No csv loaded. Use /set_csv/ before anything.")
-
-    # Call the CO2_emssion_pattern. For now, only returning the plot. Might modify the response in future commits
-    model, graph, _ = CO2_emssion_pattern(data, facility_name=facility_name, plot=True, scatter=scatter)
-
-    if graph is None:
-        raise HTTPException(status_code=404, detail=f"No data for {facility_name}.")
-    
-    """
-    Converting the img from the CO2_emssion_pattern() into b64, 
-    because cant send a matplot directly.
-    This can be decoded to get the actual plot on the front end.
-    """
-
-    buf = BytesIO()
-    graph.savefig(buf, format="png")
-    buf.seek(0)
-    plot_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-
-    return {plot_base64}
-#___________________________

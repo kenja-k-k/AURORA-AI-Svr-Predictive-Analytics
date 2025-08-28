@@ -52,7 +52,7 @@ def seasonify(data, start_month, end_month):
 
     data = data.copy()
     # Ensure 'date' is datetime
-    data["date"] = pd.to_datetime(data["date"], format="%d/%m/%Y", dayfirst=True)
+    data["date"] = pd.to_datetime(data["date"], format="%m/%d/%Y", dayfirst=True)
     data["month"] = data["date"].dt.month
 
     if start_month <= end_month:
