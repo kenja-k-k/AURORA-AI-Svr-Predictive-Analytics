@@ -198,6 +198,7 @@ async def efficiency_tracking_graph(facility_name: str, nums: bool = False):
 #for seasonal stats
 @app.get("/get_seasonal_stats/")
 async def get_seasonal_stats(facility_name: str, plot: bool = False):
+    #need to research on what else can affect the prediction
     global csv_path, data
 
     if csv_path is None:
