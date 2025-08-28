@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package PredictionAnalytics;
+
+message UploadCSVRequest {
+  bytes file_content = 1;
+}
+
+message UploadCSVResponse {
+  string status = 1;
+  string message = 2;
+}
+
+message GetSeasonalStatsRequest {
+  string facility_name = 1;
+}
+
+message DataPoint {
+  string season = 1;
+  string column = 2;
+  double median = 3;
+  double lower = 4;
+  double upper = 5;
+}
+
+message ChartData {
+  repeated DataPoint points = 1;
+}
+
+message GetSeasonalResponse {
+  ChartData chart_data = 1;
+}
+
+service PredictionAnalyticsService {
+  rpc UploadCSV(UploadCSVRequest) returns (UploadCSVResponse);
+
+  rpc GetSeasonalStats(GetSeasonalStatsRequest) returns (GetSeasonalResponse);
+}
