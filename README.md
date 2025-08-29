@@ -5,10 +5,11 @@ including an optional plot.
 
 <h2>Usage</h2>
 Use the requirements.txt to install all the necessary dependencies
-The main entry point for the app is ```grpc_server.py``` which is gRPC server file with endpoints.
+The main entry point for the app is 
+ grpc_server.py  which is gRPC server file with endpoints.
 The app can be run in Docker by runing: 
-```docker-compose build --no-cache``` to build the docker image 
-then ```docker-compose up -d``` it will start the container.
+docker-compose build --no-cache  to build the docker image 
+then docker-compose up -d, it will start the container.
 
 The endpoints will be available at ```lochalhost:50051```
 
