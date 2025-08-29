@@ -35,7 +35,7 @@ class PredictionServiceServicer(service_pb2_grpc.PredictionAnalyticsServiceServi
             return service_pb2.UploadCSVResponse(status="failed", message="error")
 
     def GetSeasonalStats(self, request, context):
-        print("Get Seasonal Stats request received")
+
         global csv_path, data
         csv_path = fr".\dataset_file.csv"
         if os.path.exists(csv_path):
@@ -53,13 +53,13 @@ class PredictionServiceServicer(service_pb2_grpc.PredictionAnalyticsServiceServi
             return service_pb2.GetSeasonalResponse()
 
         range_stats_output = {"points" : []}
-        for idx in range_stats["season"].keys():  # iterate over each index
+        for idx in range_stats["season"].keys():
             point = {
-                "season": data["season"][idx],
-                "column": data["column"][idx],
-                "median": data["median"][idx],
-                "lower": data["lower"][idx],
-                "upper": data["upper"][idx]
+                "season": range_stats["season"][idx],
+                "column": range_stats["column"][idx],
+                "median": range_stats["median"][idx],
+                "lower":  range_stats["lower"][idx],
+                "upper":  range_stats["upper"][idx]
             }
             range_stats_output["points"].append(point)
 
