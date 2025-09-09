@@ -52,7 +52,7 @@ def seasonify(data, start_month, end_month):
 
     data = data.copy()
     # Ensure 'date' is datetime
-    data["date"] = pd.to_datetime(data["date"], format="%m/%d/%Y", dayfirst=True)
+    data["date"] = pd.to_datetime(data["date"], format="%d/%m/%Y", dayfirst=True)
     data["month"] = data["date"].dt.month
 
     if start_month <= end_month:
@@ -162,6 +162,52 @@ def CO2_emssion_pattern(data, facility_name, plot=False, scatter=False):
 
     return model, graph, correlation_coef
 #__________________________________________________________________
+
+
+def predict_following_month_emission(data, facility_name):
+    filtered = data[data["facility_name"] == facility_name].dropna(
+        subset=["co2_emitted_tonnes", "capture_efficiency_percent"]
+    )
+
+    if filtered.empty:
+        print(f"No data found for facility: {facility_name}")
+        return None, None
+    filtered["date"] = pd.to_datetime(filtered["date"], errors="coerce")
+    today = pd.Timestamp.today().normalize()
+    end_date = today + pd.Timedelta(days=30)
+    filtered["month_day"] = filtered["date"].dt.strftime("%d-%m")
+    date_range = pd.date_range(start=today, end=end_date)
+    valid_month_days = date_range.strftime("%d-%m")
+    range_filtered = filtered[filtered["month_day"].isin(valid_month_days)].copy()
+    if range_filtered.empty:
+        print("No data in the next 30 days.")
+        return None
+    results = range_filtered.copy()
+    pc_features = range_filtered[["co2_emitted_tonnes"]]
+    pc_target = range_filtered["capture_efficiency_percent"]
+
+    pc_model = Ridge() #pc - predict capture
+    pc_model.fit(pc_features, pc_target)
+    results["predicted_capture_percent"] = pc_model.predict(pc_features)
+
+    ps_features = range_filtered[["co2_emitted_tonnes"]]
+    ps_target = range_filtered["storage_integrity_percent"]
+
+    ps_model = Ridge() # ps - predict storage
+    ps_model.fit(ps_features, ps_target)
+    results["predicted_storage_percent"] = ps_model.predict(ps_features)
+
+    range_filtered["month"] = range_filtered["date"].dt.month
+    range_filtered["day"] = range_filtered["date"].dt.day
+    pe_features = range_filtered[["month", "day"]]
+    pe_target = range_filtered["co2_emitted_tonnes"]
+
+    pe_model = Ridge() # pe - predicted emission
+    pe_model.fit(pe_features, pe_target)
+    results["predicted_co2_emitted"] = pe_model.predict(pe_features)
+    results["date_range"] = date_range
+
+    return results
 
 #DTR for multivariable calculations__________________
 def CO2_emission_pattern_DTR(data, facility_name, plot=False, scatter = False):

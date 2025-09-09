@@ -10,7 +10,8 @@ import pandas as pd
 from protos import service_pb2
 from protos import service_pb2_grpc
 import time
-from insights import seasonal_emission_forecasts
+from insights import seasonal_emission_forecasts, predict_following_month_emission
+
 
 class PredictionServiceServicer(service_pb2_grpc.PredictionAnalyticsServiceServicer):
 
@@ -70,6 +71,34 @@ class PredictionServiceServicer(service_pb2_grpc.PredictionAnalyticsServiceServi
         return service_pb2.GetSeasonalResponse(
             chart_data = range_stats_proto
         )
+
+    def GetPredictionStats(self, request, context):
+
+        global csv_path, data
+        csv_path = fr".\dataset_file.csv"
+        if os.path.exists(csv_path):
+            data = pd.read_csv(csv_path)
+
+        if data.empty:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("No csv loaded. Use /set_csv/ before anything.")
+            return service_pb2.GetPredictionStatsResponse()
+
+        prediction_stats = predict_following_month_emission(data, request.facility_name)
+
+        if prediction_stats is None:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("No data available for this facility.")
+            return service_pb2.GetPredictionStatsResponse()
+
+       prediction_stats_proto = service_pb2.PredictionChartData(
+            prediction_stats=prediction_stats,
+        )
+
+        return service_pb2.GetPredictionStatsResponse(
+            chart_data=prediction_stats_proto
+        )
+
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
