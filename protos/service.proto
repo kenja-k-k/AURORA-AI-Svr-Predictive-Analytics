@@ -15,6 +15,10 @@ message GetSeasonalStatsRequest {
   string facility_name = 1;
 }
 
+message GetPredictionStatsRequest {
+  string facility_name = 1;
+}
+
 message DataPoint {
   string season = 1;
   string column = 2;
@@ -23,16 +27,31 @@ message DataPoint {
   double upper = 5;
 }
 
+message PredictionData {
+  double predicted_capture_percent = 1;
+  double predicted_storage_percent = 2;
+  double predicted_co2_emitted = 3;
+  string date_range = 4;
+}
+
 message ChartData {
   repeated DataPoint points = 1;
 }
 
+message PredictionChartData {
+  repeated PredictionData prediction_stats = 1;
+}
 message GetSeasonalResponse {
   ChartData chart_data = 1;
 }
 
+message GetPredictionStatsResponse {
+  PredictionChartData prediction_stats = 1;
+}
 service PredictionAnalyticsService {
   rpc UploadCSV(UploadCSVRequest) returns (UploadCSVResponse);
 
   rpc GetSeasonalStats(GetSeasonalStatsRequest) returns (GetSeasonalResponse);
+
+  rpc GetPredictionStats(GetPredictionStatsRequest) returns (GetPredictionStatsResponse);
 }

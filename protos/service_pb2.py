@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14protos/service.proto\x12\x13PredictionAnalytics\"(\n\x10UploadCSVRequest\x12\x14\n\x0c\x66ile_content\x18\x01 \x01(\x0c\"4\n\x11UploadCSVResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"0\n\x17GetSeasonalStatsRequest\x12\x15\n\rfacility_name\x18\x01 \x01(\t\"Y\n\tDataPoint\x12\x0e\n\x06season\x18\x01 \x01(\t\x12\x0e\n\x06\x63olumn\x18\x02 \x01(\t\x12\x0e\n\x06median\x18\x03 \x01(\x01\x12\r\n\x05lower\x18\x04 \x01(\x01\x12\r\n\x05upper\x18\x05 \x01(\x01\";\n\tChartData\x12.\n\x06points\x18\x01 \x03(\x0b\x32\x1e.PredictionAnalytics.DataPoint\"I\n\x13GetSeasonalResponse\x12\x32\n\nchart_data\x18\x01 \x01(\x0b\x32\x1e.PredictionAnalytics.ChartData2\xe4\x01\n\x1aPredictionAnalyticsService\x12Z\n\tUploadCSV\x12%.PredictionAnalytics.UploadCSVRequest\x1a&.PredictionAnalytics.UploadCSVResponse\x12j\n\x10GetSeasonalStats\x12,.PredictionAnalytics.GetSeasonalStatsRequest\x1a(.PredictionAnalytics.GetSeasonalResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14protos/service.proto\x12\x13PredictionAnalytics\"(\n\x10UploadCSVRequest\x12\x14\n\x0c\x66ile_content\x18\x01 \x01(\x0c\"4\n\x11UploadCSVResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"0\n\x17GetSeasonalStatsRequest\x12\x15\n\rfacility_name\x18\x01 \x01(\t\"2\n\x19GetPredictionStatsRequest\x12\x15\n\rfacility_name\x18\x01 \x01(\t\"Y\n\tDataPoint\x12\x0e\n\x06season\x18\x01 \x01(\t\x12\x0e\n\x06\x63olumn\x18\x02 \x01(\t\x12\x0e\n\x06median\x18\x03 \x01(\x01\x12\r\n\x05lower\x18\x04 \x01(\x01\x12\r\n\x05upper\x18\x05 \x01(\x01\"\x89\x01\n\x0ePredictionData\x12!\n\x19predicted_capture_percent\x18\x01 \x01(\x01\x12!\n\x19predicted_storage_percent\x18\x02 \x01(\x01\x12\x1d\n\x15predicted_co2_emitted\x18\x03 \x01(\x01\x12\x12\n\ndate_range\x18\x04 \x01(\t\";\n\tChartData\x12.\n\x06points\x18\x01 \x03(\x0b\x32\x1e.PredictionAnalytics.DataPoint\"T\n\x13PredictionChartData\x12=\n\x10prediction_stats\x18\x01 \x03(\x0b\x32#.PredictionAnalytics.PredictionData\"I\n\x13GetSeasonalResponse\x12\x32\n\nchart_data\x18\x01 \x01(\x0b\x32\x1e.PredictionAnalytics.ChartData\"`\n\x1aGetPredictionStatsResponse\x12\x42\n\x10prediction_stats\x18\x01 \x01(\x0b\x32(.PredictionAnalytics.PredictionChartData2\xdb\x02\n\x1aPredictionAnalyticsService\x12Z\n\tUploadCSV\x12%.PredictionAnalytics.UploadCSVRequest\x1a&.PredictionAnalytics.UploadCSVResponse\x12j\n\x10GetSeasonalStats\x12,.PredictionAnalytics.GetSeasonalStatsRequest\x1a(.PredictionAnalytics.GetSeasonalResponse\x12u\n\x12GetPredictionStats\x12..PredictionAnalytics.GetPredictionStatsRequest\x1a/.PredictionAnalytics.GetPredictionStatsResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,12 +37,20 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_UPLOADCSVRESPONSE']._serialized_end=139
   _globals['_GETSEASONALSTATSREQUEST']._serialized_start=141
   _globals['_GETSEASONALSTATSREQUEST']._serialized_end=189
-  _globals['_DATAPOINT']._serialized_start=191
-  _globals['_DATAPOINT']._serialized_end=280
-  _globals['_CHARTDATA']._serialized_start=282
-  _globals['_CHARTDATA']._serialized_end=341
-  _globals['_GETSEASONALRESPONSE']._serialized_start=343
-  _globals['_GETSEASONALRESPONSE']._serialized_end=416
-  _globals['_PREDICTIONANALYTICSSERVICE']._serialized_start=419
-  _globals['_PREDICTIONANALYTICSSERVICE']._serialized_end=647
+  _globals['_GETPREDICTIONSTATSREQUEST']._serialized_start=191
+  _globals['_GETPREDICTIONSTATSREQUEST']._serialized_end=241
+  _globals['_DATAPOINT']._serialized_start=243
+  _globals['_DATAPOINT']._serialized_end=332
+  _globals['_PREDICTIONDATA']._serialized_start=335
+  _globals['_PREDICTIONDATA']._serialized_end=472
+  _globals['_CHARTDATA']._serialized_start=474
+  _globals['_CHARTDATA']._serialized_end=533
+  _globals['_PREDICTIONCHARTDATA']._serialized_start=535
+  _globals['_PREDICTIONCHARTDATA']._serialized_end=619
+  _globals['_GETSEASONALRESPONSE']._serialized_start=621
+  _globals['_GETSEASONALRESPONSE']._serialized_end=694
+  _globals['_GETPREDICTIONSTATSRESPONSE']._serialized_start=696
+  _globals['_GETPREDICTIONSTATSRESPONSE']._serialized_end=792
+  _globals['_PREDICTIONANALYTICSSERVICE']._serialized_start=795
+  _globals['_PREDICTIONANALYTICSSERVICE']._serialized_end=1142
 # @@protoc_insertion_point(module_scope)

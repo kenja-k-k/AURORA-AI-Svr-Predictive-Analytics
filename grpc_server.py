@@ -72,6 +72,7 @@ class PredictionServiceServicer(service_pb2_grpc.PredictionAnalyticsServiceServi
             chart_data = range_stats_proto
         )
 
+
     def GetPredictionStats(self, request, context):
 
         global csv_path, data
@@ -91,12 +92,22 @@ class PredictionServiceServicer(service_pb2_grpc.PredictionAnalyticsServiceServi
             context.set_details("No data available for this facility.")
             return service_pb2.GetPredictionStatsResponse()
 
-       prediction_stats_proto = service_pb2.PredictionChartData(
-            prediction_stats=prediction_stats,
-        )
 
+        prediction_stats_proto = []
+        for _, row in prediction_stats.iterrows():
+            prediction_stats_proto.append(
+                service_pb2.PredictionData(
+                    predicted_capture_percent=row["predicted_capture_percent"],
+                    predicted_storage_percent=row["predicted_storage_percent"],
+                    predicted_co2_emitted=row["predicted_co2_emitted"],
+                    date_range=str(row["date"]),  # adjust column names
+                )
+            )
+        chart_data= service_pb2.PredictionChartData(
+           prediction_stats=prediction_stats_proto,
+        )
         return service_pb2.GetPredictionStatsResponse(
-            chart_data=prediction_stats_proto
+           prediction_stats=chart_data,
         )
 
 

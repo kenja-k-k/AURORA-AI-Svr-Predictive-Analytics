@@ -44,6 +44,11 @@ class PredictionAnalyticsServiceStub(object):
                 request_serializer=protos_dot_service__pb2.GetSeasonalStatsRequest.SerializeToString,
                 response_deserializer=protos_dot_service__pb2.GetSeasonalResponse.FromString,
                 _registered_method=True)
+        self.GetPredictionStats = channel.unary_unary(
+                '/PredictionAnalytics.PredictionAnalyticsService/GetPredictionStats',
+                request_serializer=protos_dot_service__pb2.GetPredictionStatsRequest.SerializeToString,
+                response_deserializer=protos_dot_service__pb2.GetPredictionStatsResponse.FromString,
+                _registered_method=True)
 
 
 class PredictionAnalyticsServiceServicer(object):
@@ -61,6 +66,12 @@ class PredictionAnalyticsServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetPredictionStats(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_PredictionAnalyticsServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -73,6 +84,11 @@ def add_PredictionAnalyticsServiceServicer_to_server(servicer, server):
                     servicer.GetSeasonalStats,
                     request_deserializer=protos_dot_service__pb2.GetSeasonalStatsRequest.FromString,
                     response_serializer=protos_dot_service__pb2.GetSeasonalResponse.SerializeToString,
+            ),
+            'GetPredictionStats': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPredictionStats,
+                    request_deserializer=protos_dot_service__pb2.GetPredictionStatsRequest.FromString,
+                    response_serializer=protos_dot_service__pb2.GetPredictionStatsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -129,6 +145,33 @@ class PredictionAnalyticsService(object):
             '/PredictionAnalytics.PredictionAnalyticsService/GetSeasonalStats',
             protos_dot_service__pb2.GetSeasonalStatsRequest.SerializeToString,
             protos_dot_service__pb2.GetSeasonalResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetPredictionStats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/PredictionAnalytics.PredictionAnalyticsService/GetPredictionStats',
+            protos_dot_service__pb2.GetPredictionStatsRequest.SerializeToString,
+            protos_dot_service__pb2.GetPredictionStatsResponse.FromString,
             options,
             channel_credentials,
             insecure,

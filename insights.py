@@ -163,22 +163,21 @@ def CO2_emssion_pattern(data, facility_name, plot=False, scatter=False):
     return model, graph, correlation_coef
 #__________________________________________________________________
 
-
 def predict_following_month_emission(data, facility_name):
     filtered = data[data["facility_name"] == facility_name].dropna(
-        subset=["co2_emitted_tonnes", "capture_efficiency_percent"]
+        subset=["co2_emitted_tonnes", "capture_efficiency_percent", "storage_integrity_percent", "date"]
     )
-
     if filtered.empty:
         print(f"No data found for facility: {facility_name}")
         return None, None
-    filtered["date"] = pd.to_datetime(filtered["date"], errors="coerce")
+    filtered["date"] = pd.to_datetime(filtered["date"], errors="coerce").dt.normalize()
+    filtered = filtered.dropna(subset=["date"])
     today = pd.Timestamp.today().normalize()
     end_date = today + pd.Timedelta(days=30)
-    filtered["month_day"] = filtered["date"].dt.strftime("%d-%m")
-    date_range = pd.date_range(start=today, end=end_date)
-    valid_month_days = date_range.strftime("%d-%m")
-    range_filtered = filtered[filtered["month_day"].isin(valid_month_days)].copy()
+    last_year_today = today - pd.DateOffset(years=1)
+    last_year_end = end_date - pd.DateOffset(years=1)
+    range_filtered = filtered[(filtered["date"] >= last_year_today) & (filtered["date"] <= last_year_end)].copy()
+
     if range_filtered.empty:
         print("No data in the next 30 days.")
         return None
@@ -205,9 +204,11 @@ def predict_following_month_emission(data, facility_name):
     pe_model = Ridge() # pe - predicted emission
     pe_model.fit(pe_features, pe_target)
     results["predicted_co2_emitted"] = pe_model.predict(pe_features)
-    results["date_range"] = date_range
+    results["date"] = results["date"].apply(lambda d: d.replace(year=2025) if pd.notnull(d) else d)
+    results["date_range"] = results["date"]
 
     return results
+
 
 #DTR for multivariable calculations__________________
 def CO2_emission_pattern_DTR(data, facility_name, plot=False, scatter = False):
