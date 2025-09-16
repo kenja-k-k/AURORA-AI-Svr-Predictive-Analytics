@@ -12,6 +12,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 50051
+EXPOSE 50052
 
 CMD ["python", "grpc_server.py"]

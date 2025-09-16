@@ -7,16 +7,16 @@ services:
       /usr/local/bin/etcd
       --name etcd0
       --data-dir /etcd-data
-      --advertise-client-urls http://0.0.0.0:2379
-      --listen-client-urls http://0.0.0.0:2379
-      --initial-advertise-peer-urls http://0.0.0.0:2380
-      --listen-peer-urls http://0.0.0.0:2380
-      --initial-cluster etcd0=http://0.0.0.0:2380
+      --advertise-client-urls http://0.0.0.0:2378
+      --listen-client-urls http://0.0.0.0:2378
+      --initial-advertise-peer-urls http://0.0.0.0:2381
+      --listen-peer-urls http://0.0.0.0:2381
+      --initial-cluster etcd0=http://0.0.0.0:2381
       --initial-cluster-state new
       --initial-cluster-token etcd-token
     ports:
-      - "2379:2379"
-      - "2380:2380"
+      - "2378:2378"
+      - "2381:2381"
     volumes:
       - etcd-data:/etcd-data
     networks:
@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile
     container_name: prediction-service
     ports:
-      - "50051:50051"
+      - "50052:50052"
     networks:
       - snet-net
 
