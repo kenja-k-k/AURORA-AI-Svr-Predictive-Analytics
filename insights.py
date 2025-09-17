@@ -132,11 +132,11 @@ def seasonal_emission_forecasts(data, facility_name):         # Groups a facilit
 
 # -------------------------------------------------------------------------------------
 # FUNCTION 3: Ridge Regression (emission vs efficiency)
-
+# What it does: Fits a Ridge Regression model to find relationship between CO₂ emissions and capture efficiency.
 
 #Main function for analytics. This may use different models_________
 def CO2_emssion_pattern(data, facility_name, plot=False, scatter=False):
-    filtered = data[data["facility_name"] == facility_name].dropna(
+    filtered = data[data["facility_name"] == facility_name].dropna(             # STEP 1: Filter rows for facility + drop missing values
         subset=["co2_emitted_tonnes", "capture_efficiency_percent"]
     )
 
@@ -144,16 +144,16 @@ def CO2_emssion_pattern(data, facility_name, plot=False, scatter=False):
         print(f"No data found for facility: {facility_name}")
         return None, None
 
-    features = filtered[["co2_emitted_tonnes"]]
+    features = filtered[["co2_emitted_tonnes"]]              # STEP 2: Define input = emissions, target = efficiency
     target = filtered["capture_efficiency_percent"]
 
-    model = Ridge()
+    model = Ridge()                                          # STEP 3: Train Ridge Regression model
     model.fit(features, target)
-    predictions = model.predict(features)
+    predictions = model.predict(features)                    # STEP 4: Make predictions + calculate correlation
     correlation_matrix = np.corrcoef(target, predictions)
     correlation_coef = correlation_matrix[0, 1]
     print(f"Correlation coef = {correlation_coef}")
-    graph = None
+    graph = None                                             # STEP 5: Optional graph
     if plot:
       
         graph = plt.figure(figsize=(16, 9))
@@ -167,11 +167,19 @@ def CO2_emssion_pattern(data, facility_name, plot=False, scatter=False):
         #plt.show()  #not needed for now
         
 
-    return model, graph, correlation_coef
-#__________________________________________________________________
+    return model, graph, correlation_coef                    # STEP 6: Output = trained model + correlation value
+# -------------------------------------------------------------------------------------
+# FUNCTION 4: Next-Month Forecasts (30-day predictions)
+# What it does: Predicts next 30 days of:
+    """
+    - CO₂ emissions
+    - Capture efficiency
+    - Storage integrity
+    Based on last year’s same period.
+    """
 
 def predict_following_month_emission(data, facility_name):
-    filtered = data[data["facility_name"] == facility_name].dropna(
+    filtered = data[data["facility_name"] == facility_name].dropna(            # STEP 1: Filter facility rows + clean dates
         subset=["co2_emitted_tonnes", "capture_efficiency_percent", "storage_integrity_percent", "date"]
     )
     if filtered.empty:
@@ -179,67 +187,70 @@ def predict_following_month_emission(data, facility_name):
         return None, None
     filtered["date"] = pd.to_datetime(filtered["date"], errors="coerce").dt.normalize()
     filtered = filtered.dropna(subset=["date"])
-    today = pd.Timestamp.today().normalize()
+    today = pd.Timestamp.today().normalize()                                   # STEP 2: Define "this year" vs "last year" time window
     end_date = today + pd.Timedelta(days=30)
     last_year_today = today - pd.DateOffset(years=1)
     last_year_end = end_date - pd.DateOffset(years=1)
-    range_filtered = filtered[(filtered["date"] >= last_year_today) & (filtered["date"] <= last_year_end)].copy()
+    range_filtered = filtered[(filtered["date"] >= last_year_today) & (filtered["date"] <= last_year_end)].copy()               # STEP 3: Extract last year’s data for the window
 
     if range_filtered.empty:
         print("No data in the next 30 days.")
         return None
     results = range_filtered.copy()
-    pc_features = range_filtered[["co2_emitted_tonnes"]]
+    pc_features = range_filtered[["co2_emitted_tonnes"]]                # STEP 4: Train Ridge models for each variable
     pc_target = range_filtered["capture_efficiency_percent"]
 
-    pc_model = Ridge() #pc - predict capture
+    pc_model = Ridge() #pc - predict capture                            # (a) Capture efficiency vs emissions
     pc_model.fit(pc_features, pc_target)
     results["predicted_capture_percent"] = pc_model.predict(pc_features)
 
     ps_features = range_filtered[["co2_emitted_tonnes"]]
     ps_target = range_filtered["storage_integrity_percent"]
 
-    ps_model = Ridge() # ps - predict storage
+    ps_model = Ridge() # ps - predict storage                            # (b) Storage integrity vs emissions
     ps_model.fit(ps_features, ps_target)
     results["predicted_storage_percent"] = ps_model.predict(ps_features)
 
     range_filtered["month"] = range_filtered["date"].dt.month
     range_filtered["day"] = range_filtered["date"].dt.day
-    pe_features = range_filtered[["month", "day"]]
+    pe_features = range_filtered[["month", "day"]]                       # (c) Emissions vs day-of-year (month + day)
     pe_target = range_filtered["co2_emitted_tonnes"]
 
     pe_model = Ridge() # pe - predicted emission
     pe_model.fit(pe_features, pe_target)
     results["predicted_co2_emitted"] = pe_model.predict(pe_features)
-    results["date"] = results["date"].apply(lambda d: d.replace(year=2025) if pd.notnull(d) else d)
+    results["date"] = results["date"].apply(lambda d: d.replace(year=2025) if pd.notnull(d) else d)             # STEP 5: Shift predictions to current year
     results["date_range"] = results["date"]
 
-    return results
+    return results                                                 # STEP 6: Output = DataFrame of next 30 days predictions
 
+# -------------------------------------------------------------------------------------
+# FUNCTION 5: Decision Tree Regression (multi-variable), "DTR for multivariable calculations"
+# Inputs: region, storage site type, emissions.
+# Output: capture efficiency + feature importance.
 
-#DTR for multivariable calculations__________________
 def CO2_emission_pattern_DTR(data, facility_name, plot=False, scatter = False):
-    filtered = data[data["facility_name"] == facility_name].dropna(subset=["co2_emitted_tonnes", "capture_efficiency_percent"])
+    filtered = data[data["facility_name"] == facility_name].dropna(subset=["co2_emitted_tonnes", "capture_efficiency_percent"])             # STEP 1: Filter + clean
     if filtered.empty:
         print(f"Data not found for the input facility name ({facility_name})")
         return None, None
 
-    features = filtered[["region", "storage_site_type", "co2_emitted_tonnes"]]
+    features = filtered[["region", "storage_site_type", "co2_emitted_tonnes"]]                    # STEP 2: Define inputs and target
     target   = filtered["capture_efficiency_percent"]
 
-    preprocessor = ColumnTransformer(        #Need one-hot encoding, so using preprocessor
+    preprocessor = ColumnTransformer(        #Need one-hot encoding, so using preprocessor        # STEP 3: Preprocess categorical inputs (region, type → numbers)
         transformers=[
             ("types", OneHotEncoder(handle_unknown="ignore"), ["region", "storage_site_type"]),
             ("num", "passthrough", ["co2_emitted_tonnes"])
         ]
     )
 
-    model = Pipeline(steps=[("Preprocessor", preprocessor), 
+    model = Pipeline(steps=[("Preprocessor", preprocessor),                          # STEP 4: Train Decision Tree model
     ("Regressor", DTR(random_state = 42, max_depth = 5))])
 
     model.fit(features, target)
 
-    one_hot = model.named_steps["Preprocessor"].named_transformers_["types"]
+    one_hot = model.named_steps["Preprocessor"].named_transformers_["types"]         # STEP 5: Extract feature importance
     one_hot_features = one_hot.get_feature_names_out(["region","storage_site_type"])
     all_features = list(one_hot_features) + ["co2_emitted_tonnes"]
 
@@ -252,21 +263,21 @@ def CO2_emission_pattern_DTR(data, facility_name, plot=False, scatter = False):
 
     print(importance_df)
 
-    return model, importance_df
-#______________________________________
+    return model, importance_df                                                     # STEP 6: Output = trained model + importance table
+# -------------------------------------------------------------------------------------
         
 
 #Run from cli______________________________
 if __name__ == "__main__":
-    
+#section allows script to be run manually by user in the terminal:    
     parser = argparse.ArgumentParser(description="Get emission patterns per facility")
     parser.add_argument("csv_file", type=str, help="Path to the csv with emission data")
     parser.add_argument("--facility", type=str, help="Facility name", required=True)
     parser.add_argument("--plot", action="store_true", help="Plot L2 for analytics")
     parser.add_argument("--scatter", action="store_true", help="Get the scatter plot along with L2")
     args = parser.parse_args()
-    data = pd.read_csv(args.csv_file)
+    data = pd.read_csv(args.csv_file) # Load the CSV file into a pandas DataFrame
     #CO2_emssion_pattern(data, args.facility, plot=args.plot, scatter=args.scatter)
-    CO2_emission_pattern_DTR(data, args.facility, plot=args.plot, scatter=args.scatter)
+    CO2_emission_pattern_DTR(data, args.facility, plot=args.plot, scatter=args.scatter) # Run one of the functions (basic CO2 pattern analysis)
     
     #_________________________________________________________
