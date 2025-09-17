@@ -1,31 +1,37 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error
-import argparse
-from sklearn.tree import DecisionTreeRegressor as DTR
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-import matplotlib.dates as mdates
+# IMPORTS: Bringing in the tools we need
+# -------------------------------
 
-#Live display of CO2 capture efficiency
-def CO2_stats(data, facility_name):
+import pandas as pd               # Tool for handling tabular data (spreadsheets, CSVs)
+import numpy as np                # Tool for working with numbers
+import matplotlib.pyplot as plt   # Tool for plotting graphs, Shortcut to make charts and graphs
+from sklearn.linear_model import Ridge                  # Machine Learning model: Ridge Regression (used to find patterns/relationships)
+from sklearn.metrics import mean_squared_error          # Tool to measure how accurate the model’s predictions are
+import argparse                   # Tool that lets us run the code from the command line with arguments
+from sklearn.tree import DecisionTreeRegressor as DTR   # Another ML model (Decision Tree Regression)
+from sklearn.preprocessing import OneHotEncoder         # Converts text categories into numeric form
+from sklearn.compose import ColumnTransformer           # Combines numeric + text processing
+from sklearn.pipeline import Pipeline                   # Chains together data processing steps
+import matplotlib.dates as mdates                       # For formatting dates on graphs
+
+# -------------------------------------------------------------------------------------
+# FUNCTION 1: Live CO₂ Stats (efficiency over time + anomalies)
+# What it does: Shows capture efficiency of a facility over time and highlights anomalies.
+
+def CO2_stats(data, facility_name):                         # STEP 1: Filter for the requested facility + drop rows with missing values
     filtered = data[data["facility_name"] == facility_name].dropna(
         subset=["co2_emitted_tonnes", "capture_efficiency_percent"]
     )
-    filtered["date"] = pd.to_datetime(filtered["date"], format="%d/%m/%Y", dayfirst=True)
+    filtered["date"] = pd.to_datetime(filtered["date"], format="%d/%m/%Y", dayfirst=True)     # STEP 2: Convert 'date' column into proper date format
 
-    normal  = filtered[filtered["anomaly_flag"] == False]
+    normal  = filtered[filtered["anomaly_flag"] == False]   # STEP 3: Split into normal rows and anomaly-flagged rows
     anomalies = filtered[filtered["anomaly_flag"] == True]
-    graph   = plt.figure(figsize=(16,9))
+    graph   = plt.figure(figsize=(16,9))                    # STEP 4: Create a line plot of capture efficiency
     plt.plot(filtered["date"], filtered["capture_efficiency_percent"], label="Capture efficiency", color="blue")
 
-    #plt.scatter(normal["date"], normal["capture_efficiency_percent"], label="Normal", color="green")
+    #plt.scatter(normal["date"], normal["capture_efficiency_percent"], label="Normal", color="green")      # STEP 5: Overlay anomalies in red
     plt.scatter(anomalies["date"], anomalies["capture_efficiency_percent"], label="Anomaly", color="red")
     
-    plt.xlabel("Date")
+    plt.xlabel("Date")                                      # STEP 6: Add labels/titles
     plt.xlim(filtered["date"].min(), filtered["date"].max())
 
     plt.ylabel("Efficiency")
@@ -33,10 +39,11 @@ def CO2_stats(data, facility_name):
     plt.title(f"Efficiency tracking for {facility_name}")
     plt.legend()
     
-    return graph, filtered[["date", "co2_captured_tonnes", "capture_efficiency_percent"]]
-#_______________________________
+    return graph, filtered[["date", "co2_captured_tonnes", "capture_efficiency_percent"]]             # STEP 7: Output = (graph, cleaned dataset with key columns)
 
-#Seasonal Forecasts__________________
+# -------------------------------------------------------------------------------------
+# FUNCTION 2: Seasonal Forecasts (expected ranges ±10%)
+
 def get_dates_data (data, start_date, end_date): #This one is not in use for now
     
     data = data.copy()
@@ -48,7 +55,7 @@ def get_dates_data (data, start_date, end_date): #This one is not in use for now
     filtered = data[(data["date"] >= start) & (data["date"] <= end)]
     return filtered
 
-def seasonify(data, start_month, end_month):
+def seasonify(data, start_month, end_month):         # Helper function: Assigns rows to a season based on month.
 
     data = data.copy()
     # Ensure 'date' is datetime
@@ -65,18 +72,18 @@ def seasonify(data, start_month, end_month):
     filtered = data[mask]
     return filtered
 
-def seasonal_emission_forecasts(data, facility_name):
-    filtered = data[data["facility_name"] == facility_name].dropna(
+def seasonal_emission_forecasts(data, facility_name):         # Groups a facility’s data into seasons and calculates median ranges.
+    filtered = data[data["facility_name"] == facility_name].dropna(                  # STEP 1: Filter facility + drop rows with missing values
         subset=["co2_emitted_tonnes", "co2_captured_tonnes", "capture_efficiency_percent"]
     )
 
     # Use the month-only version of seasonify
-    summer_stats = seasonify(filtered, 5, 9)
+    summer_stats = seasonify(filtered, 5, 9)                       # STEP 2: Split data into seasons
     autumn_stats = seasonify(filtered, 10, 11)
     winter_stats = seasonify(filtered, 12, 2)
     spring_stats = seasonify(filtered, 3, 4)
 
-    cols = ["co2_emitted_tonnes", "co2_captured_tonnes"]
+    cols = ["co2_emitted_tonnes", "co2_captured_tonnes"]           # STEP 3: For each season, calculate median ±10%
 
     rows = []
 
@@ -97,11 +104,10 @@ def seasonal_emission_forecasts(data, facility_name):
                 "upper": upper[col]
             })
 
-    # Convert list of dicts to DataFrame
-    ranges = pd.DataFrame(rows)
+    ranges = pd.DataFrame(rows)          # STEP 4: Create summary table, Convert list of dicts to DataFrame
 
     
-    plt.figure(figsize=(12,6))
+    plt.figure(figsize=(12,6))           # STEP 5: Plot shaded seasonal ranges
     
     for col in cols:
 
@@ -122,9 +128,10 @@ def seasonal_emission_forecasts(data, facility_name):
     
     # Save the figure object to return
     graph = plt.gcf()
-    return ranges
+    return ranges                         # STEP 6: Output = summary table of ranges
 
-#___________________________
+# -------------------------------------------------------------------------------------
+# FUNCTION 3: Ridge Regression (emission vs efficiency)
 
 
 #Main function for analytics. This may use different models_________
