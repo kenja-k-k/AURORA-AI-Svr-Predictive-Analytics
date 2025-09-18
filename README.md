@@ -51,7 +51,8 @@ The AURORA system integrates **SingularityNET**, AI Services, blockchain-based v
 This repository specifically implements **Service 2 Backend (CO₂ Predictive Analytics)** highlighted in **Container 2** of the architecture.
 
 - **Input:** Simulated IoT data streams mimicking CCS facility operations (CO₂ emissions, capture rates, storage conditions, etc.).  
-- **Output:** Seasonal performance metrics, predictive insights based on historical trends, and proactive alerts for anomalies.  
+- **Output:** Seasonal performance metrics, predictive insights based on historical trends, and proactive alerts for anomalies.
+- **Insights Generation:** You can check the `insights.py` file to see the code for generating the insights. This code file includes highly detailed comments explaining the steps taken, understandable also for non-developers.
 - **Blockchain Integration:** Hashes analytics data to the **internal Blockchain Hashing Service** for verifiable storage (separate from SingularityNET’s Ethereum metering).  
 
 This service extends the CO₂ analytics by focusing on **seasonal patterns and short-term forecasts**, helping operators anticipate performance shifts due to seasonal variations.
