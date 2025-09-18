@@ -96,7 +96,7 @@ Core components include the gRPC server, analytics module, sample datasets, and 
 |-------------------------|------------------------------------------------------------------------------------------------------|------------------|
 | **`/protos/`**          | gRPC protocol buffer definitions for service communication.                                          | All services |
 | **`.gitignore`**        | Rules to exclude Python/IDE/cache files from git.                                                   | Housekeeping |
-| **`Aurora component diagram.jpg`**   | High-level component diagram of the ESG Reporting service.                                         | Documentation |
+| **`Aurora component diagram.jpg, Aurora sequence diagram.png, Aurora service 2 insights generation flow.jpg`**   | Diagrams of the Aurora project and ESG Reporting service.                                         | Documentation |
 | **`Dockerfile`**        | Container build instructions for the service.                                                       | Deployment |
 | **`README.md`**         | Project overview, installation, and usage instructions (this file).                                  | Documentation |
 | **`docker-compose.yml`**| Orchestration for multi-container setup (service + gRPC server).                                     | Deployment |
