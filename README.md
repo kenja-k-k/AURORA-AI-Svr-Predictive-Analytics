@@ -41,6 +41,9 @@ The AURORA system integrates **SingularityNET**, AI Services, blockchain-based v
 - **Database Container**
   - Stores processed data and enables querying for historical and seasonal analysis.
 
+**Components interact as follows**
+![Aurora sequence diagram](https://github.com/kenja-k-k/AURORA-AI-Svr-Predictive-Analytics/blob/main/Aurora%20sequence%20diagram.png)
+
 ---
 
 ## 2. Role of This Service
@@ -66,6 +69,8 @@ From a business perspective, this service answers:
 ---
 
 ## 3. PoC Features and Requirements
+
+![Aurora service 2 insights generation flow](https://github.com/kenja-k-k/AURORA-AI-Svr-Predictive-Analytics/blob/main/Aurora%20service%202%20insights%20generation%20flow.jpg)
 
 The **Proof of Concept (PoC)** demonstrates three primary features using simulated IoT data, as specified in the *CO₂ Predictive Analytics Specification*:
 
