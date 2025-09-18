@@ -11,7 +11,7 @@ The service demonstrates how simulated IoT data from Carbon Capture and Storage 
 The AURORA system integrates **SingularityNET**, AI Services, blockchain-based verification, and IoT data streams into a cohesive decentralized platform.
 
 ### System Overview
-![AURORA Architecture](Architecture.jpg)
+![Aurora component diagram](https://github.com/kenja-k-k/AURORA-AI-Svr-Predictive-Analytics/blob/main/Aurora%20component%20diagram.jpg)
 
 ### Key Components
 - **SingularityNET Integration**
