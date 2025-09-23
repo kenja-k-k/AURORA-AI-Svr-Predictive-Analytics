@@ -1,0 +1,28 @@
+{
+        "blockchain_enabled": true,
+        "blockchain_network_selected": "sepolia",
+        "daemon_endpoint": "0.0.0.0:7001",
+        "daemon_group_name": "default_group",
+        "ipfs_endpoint": "https://ipfs.singularitynet.io:443",
+        "organization_id": "VeritasKenjaLabs",
+        "service_id": "PredictionAnalyticsService",
+        "service_endpoint": "http://prediction-service:50051",
+        "metering_enabled": "false",
+        "metering_endpoint": "https://marketplace-mt-v2.singularitynet.io",
+        "private_key_for_metering": "d186ead6ad698e02ef1258fd6daa5f69cf18ab4db46bd411a353fdbb5b5069be",
+        "ethereum_json_rpc_http_endpoint": "https://eth-sepolia.g.alchemy.com/v2/evqGVBg3cpIX9JGecs-eo",
+        "ssl_cert": "/etc/letsencrypt/live/singularitynet.kenja.com/fullchain.pem",
+        "ssl_key": "/etc/letsencrypt/live/singularitynet.kenja.com/privkey.pem",
+        "payment_channel_storage_client": {
+        "type": "etcd",
+        "connection_timeout": "5s",
+        "request_timeout": "5s",
+        "endpoints": ["http://etcd-pred:2379"]
+        },
+        "log": {
+            "level": "debug",
+            "output": {
+                "type": ["stdout", "file"]
+            }
+        }
+}
